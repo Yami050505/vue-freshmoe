@@ -1,5 +1,4 @@
 <template>
-    <div>
         <h1>Home页面</h1>
-    </div>
+        <div style="height: 1000px;"></div>
 </template>
