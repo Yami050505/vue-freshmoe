@@ -27,6 +27,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      // 带 /api 前缀的请求由开发服务器转发，解决浏览器跨域问题
+      '/api': {
+        target: 'http://pcapi-xiaotuxian-front-devtest.itheima.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
    css: {
     preprocessorOptions: {
       scss: {
