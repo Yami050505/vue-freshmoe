@@ -16,12 +16,13 @@ import HomePanel from './components/HomePanel.vue'
   <HomeNew />
   <HomeHot />
   <HomeProduct />
+  <HomePanel />
   <!-- 测试面板组件 -->
-  <HomePanel title="新鲜好物" subTitle="新鲜出炉 品质靠谱">
+  <!-- <HomePanel title="新鲜好物" subTitle="新鲜出炉 品质靠谱">
     <div> 主体内容 </div>
-  </HomePanel>
+  </HomePanel> -->
   <!-- 测试面板组件 -->
-  <HomePanel title="热门推荐" subTitle="热门推荐 品质保障">
+  <!-- <HomePanel title="热门推荐" subTitle="热门推荐 品质保障">
     <div> 主体内容 </div>
-  </HomePanel>
+  </HomePanel> -->
 </template>
