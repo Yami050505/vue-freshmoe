@@ -16,7 +16,10 @@ onMounted(()=>{
 <template>
   <LayoutNav />
   <LayoutHeader />
-  <RouterView />
+  <!-- 添加key属性，解决路由切换时的动画问题 -->
+   <!-- 破坏复用机制，强制销毁重建 -->
+  <!-- <RouterView :key="$route.fullPath" /> -->
+   <RouterView />
   <LayoutFooter />
   <LayoutFixed />
 </template>
