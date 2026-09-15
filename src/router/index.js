@@ -38,6 +38,12 @@ const router = createRouter({
       component:Login
     }
   ],
+  // 路由滚动行为定制-使每次切换页面都从页面顶部开始
+  scrollBehavior(){
+    return {
+      top:0
+    }
+  }
 })
 
 export default router
