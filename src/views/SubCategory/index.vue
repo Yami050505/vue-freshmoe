@@ -30,6 +30,14 @@ const getGoodList = async ()=>{
 onMounted(()=>{
   getGoodList()
 })
+
+// tab切换事件
+const tabChange = ()=>{
+  console.log('tab切换了',reqData.value.sortField)
+//  重置page
+    reqData.value.page = 1
+    getGoodList()
+}
 </script>
 
 <template>
@@ -44,7 +52,7 @@ onMounted(()=>{
       </el-breadcrumb>
     </div>
     <div class="sub-container">
-      <el-tabs>
+      <el-tabs v-model="reqData.sortField" @tab-click="tabChange">
         <el-tab-pane label="最新商品" name="publishTime"></el-tab-pane>
         <el-tab-pane label="最高人气" name="orderNum"></el-tab-pane>
         <el-tab-pane label="评论最多" name="evaluateNum"></el-tab-pane>
