@@ -1,4 +1,5 @@
 <script setup>
+import DetailHot from './components/DetailHot.vue'
 import { getDetail } from '@/apis/detail'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -59,7 +60,7 @@ onMounted(()=>{
                 </li>
                 <li>
                   <p>品牌信息</p>
-                  <p> {{ goods.brand.name }} </p>
+                  <p> {{ goods.brand?.name }} </p>
                   <p><i class="iconfont icon-dynamic-filling"></i>品牌主页</p>
                 </li>
               </ul>
@@ -122,6 +123,10 @@ onMounted(()=>{
             </div>
             <!-- 24热榜+专题推荐 -->
             <div class="goods-aside">
+             <!-- 24小时 -->
+              <DetailHot />
+              <!-- 周 -->
+              <DetailHot />
 
             </div>
           </div>
