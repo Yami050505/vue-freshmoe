@@ -1,9 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { loginAPI } from '@/apis/user'
 import { ElMessage } from 'element-plus'
 import 'element-plus/theme-chalk/el-message.css'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+// 获取用户管理实例
+const userStore = useUserStore()
 
 
 
@@ -57,8 +59,7 @@ const doLogin =  () => {
         // 以valid判断是否登录成功
         if(valid){
             // 登录成功
-            const res = await loginAPI({account,password})
-            console.log(res)
+            await userStore.getUserInfo({account,password})
             // 提示用户
             ElMessage({type:'success',message:'登录成功'})
             // 跳转首页
