@@ -15,4 +15,7 @@ return{
     userInfo,
     getUserInfo
 }
-})
+},{
+    persist:true
+}
+)
