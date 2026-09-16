@@ -17,8 +17,8 @@ export const useCartStore=defineStore('cart',()=>{
     // 2定义获取接口数据的action
     const addCart = async (goods) => {
         const {skuId,count}=goods
-        // 2.1判断是否登录
-        if(isLogin){
+        // 2.1判断是否登录（computed 需取 .value）
+        if(isLogin.value){
             // 登录了,添加购物车操作
             await insertCartAPI({skuId,count})
             // 刷新购物车列表
@@ -99,13 +99,14 @@ export const useCartStore=defineStore('cart',()=>{
         totalCount,
         totalPrice,
         isAll,
+        selectedCount,
+        selectedPrice,
         addCart,
         delCart,
         singleCheck,
         allCheck,
-        selectedCount,
-        selectedPrice,
         clearCart,
+        updateNewList,
     }
 },{
     persist:true
