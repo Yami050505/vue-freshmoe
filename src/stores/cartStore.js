@@ -25,6 +25,14 @@ export const useCartStore=defineStore('cart',()=>{
         // 使用filter方法删除对应的商品
         cartList.value=cartList.value.filter((item)=>item.skuId!==skuId)
     } 
+
+     // 单选功能
+     const singleCheck=(skuId,selected)=>{
+        // 通过skuId找到对应的商品,然后把他的selected属性修改为selected参数的值
+        const item=cartList.value.find((item)=>item.skuId===skuId)
+        item.selected=selected
+     }
+    
     // 计算属性
     // 1总的数量 所有项的count之和
     const totalCount= computed(()=>
@@ -39,7 +47,8 @@ export const useCartStore=defineStore('cart',()=>{
         totalCount,
         totalPrice,
         addCart,
-        delCart
+        delCart,
+        singleCheck
     }
 },{
     persist:true
