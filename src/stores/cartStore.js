@@ -1,14 +1,19 @@
 // 封装购物车模块
 import { defineStore } from 'pinia'
 import { ref,computed } from 'vue'
-import { useUserStore } from './user'
-import { insertCartAPI,findNewCartListAPI } from '@/apis/cart'
+import { useUserStore } from './userStore'
+import { insertCartAPI,findNewCartListAPI,delCartAPI } from '@/apis/cart'
 export const useCartStore=defineStore('cart',()=>{
     // 1.引入userStore
     const userStore=useUserStore()
     const isLogin=computed(()=>userStore.userInfo.token)
     // 1定义管理购物车数据的state
     const cartList=ref([])
+    // 获取最新购物车列表action
+    const updateNewList=async ()=>{
+    const res=await findNewCartListAPI()
+    cartList.value=res.result
+    }
     // 2定义获取接口数据的action
     const addCart = async (goods) => {
         const {skuId,count}=goods
@@ -17,8 +22,7 @@ export const useCartStore=defineStore('cart',()=>{
             // 登录了,添加购物车操作
             await insertCartAPI({skuId,count})
             // 刷新购物车列表
-            const res=await findNewCartListAPI()
-            cartList.value=res.result
+            updateNewList()
         }else{
              // 添加购物车操作
         // 已添加过 - count+1
@@ -34,13 +38,23 @@ export const useCartStore=defineStore('cart',()=>{
       
     }   
     // 删除购物车商品
-    const delCart = (skuId) => {
-        // 从cartList中删除对应的商品
-        // const idx=cartList.value.findIndex((item)=>skuId===item.skuId)
-        // cartList.value.splice(idx,1)
-        // 使用filter方法删除对应的商品
-        cartList.value=cartList.value.filter((item)=>item.skuId!==skuId)
+    const delCart = async (skuId) => {
+        if(isLogin.value){
+            // 调用接口实现删除购物车商品操作
+            await delCartAPI([skuId])
+            // 刷新购物车列表
+            updateNewList()
+        }else{
+            cartList.value=cartList.value.filter((item)=>item.skuId!==skuId)
+             // 从cartList中删除对应的商品
+             // const idx=cartList.value.findIndex((item)=>skuId===item.skuId)
+             // cartList.value.splice(idx,1)
+             // 使用filter方法删除对应的商品
+        }
+       
+        
     } 
+
 
      // 单选功能
      const singleCheck=(skuId,selected)=>{
