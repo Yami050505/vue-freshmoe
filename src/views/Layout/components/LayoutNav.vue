@@ -22,6 +22,7 @@ const userStore = useUserStore()
           <li><a href="javascript:;">我的订单</a></li>
           <li><a href="javascript:;">会员中心</a></li>
         </template>
+        <!-- 非登录时显示第二块 -->
         <template v-else>
           <li><RouterLink to="/login">请先登录</RouterLink></li>
           <li><a href="javascript:;">帮助中心</a></li>
