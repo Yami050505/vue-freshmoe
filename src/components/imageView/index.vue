@@ -37,10 +37,10 @@ const top = ref(0)
 const positionX = ref({})
 const positionY = ref()
 watch([elementX,elementY],()=>{
-    console.log("xy变化了")
+    // console.log("xy变化了")
     // 如果鼠标不在有效范围内,则不执行以下代码
     if(isOutside.value){return}
-    console.log("后续逻辑执行了")
+    // console.log("后续逻辑执行了")
 
     // 有效范围内控制滑块距离
     // 横向
