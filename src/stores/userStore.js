@@ -2,8 +2,11 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { loginAPI } from '@/apis/user'
+import { useCartStore } from './cartStore'
 
 export const useUserStore=defineStore('user',()=>{
+// 1.从pinia获取购物车数据
+const cartStore=useCartStore()
 // 1定义管理用户数据的state
 const userInfo=ref({})
 // 2定义获取接口数据的action
@@ -15,6 +18,8 @@ const getUserInfo=async({account,password})=>{
 // 退出时清除用户信息
 const clearUserInfo=()=>{
     userInfo.value={}
+    // 执行清楚购物车的action
+    cartStore.clearCart()
 }
 
 // 3以对象的格式把state和action返回
