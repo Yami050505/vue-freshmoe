@@ -32,6 +32,13 @@ export const useCartStore=defineStore('cart',()=>{
         const item=cartList.value.find((item)=>item.skuId===skuId)
         item.selected=selected
      }
+    // 全选功能
+    const allCheck=(selected)=>{
+        // 通过selected参数修改所有商品的selected属性
+        cartList.value.forEach((item)=>{
+            item.selected=selected
+        })
+    }
     
     // 计算属性
     // 1总的数量 所有项的count之和
@@ -42,13 +49,19 @@ export const useCartStore=defineStore('cart',()=>{
     const totalPrice= computed(()=>
          cartList.value.reduce((pre,cur)=>pre+cur.count*cur.price,0)
     )
+    // 是否全选
+    const isAll =computed(()=>
+        cartList.value.every((item)=>item.selected)
+    )
     return{
         cartList,
         totalCount,
         totalPrice,
+        isAll,
         addCart,
         delCart,
-        singleCheck
+        singleCheck,
+        allCheck,
     }
 },{
     persist:true
