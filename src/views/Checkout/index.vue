@@ -1,8 +1,23 @@
 <script setup>
-import { getCheckInfoAPI } from '@/apis/checkout'
-import { ref,onMounted } from 'vue'
+import { getCheckInfoAPI,createOrderAPI } from '@/apis/checkout'
+import { ref,onMounted,computed } from 'vue'
+import {useRouter} from 'vue-router'
+import { ElMessage } from 'element-plus'
+import {useCartStore} from '@/stores/cartStore'
+import { useUserStore } from '@/stores/userStore'
+const cartStore = useCartStore()
+const userStore = useUserStore()
+const router = useRouter()
+
 const checkInfo = ref({})  // 订单对象
 const curAddress = ref({})  // 默认地址对象
+// 从购物车中筛选已选中的商品，渲染到结算页
+const selectedGoods = computed(() => cartStore.cartList.filter(item => item.selected))
+// 金额明细（从已选商品计算）
+const goodsCount = computed(() => selectedGoods.value.reduce((s, i) => s + i.count, 0))
+const totalPrice = computed(() => selectedGoods.value.reduce((s, i) => s + i.price * i.count, 0))
+const postFee = computed(() => checkInfo.value.summary?.postFee ?? 0)
+const totalPayPrice = computed(() => totalPrice.value + postFee.value)
 const getCheckInfo=async()=>{
     const res=await getCheckInfoAPI()
     checkInfo.value=res.result
@@ -11,11 +26,19 @@ const getCheckInfo=async()=>{
     const item=checkInfo.value.userAddresses.find(item=>item.isDefault === 0)
     curAddress.value=item
    }
-onMounted(()=>{
+onMounted(async ()=>{
+    // 已登录则从服务端同步最新购物车，避免本地持久化数据与服务端不一致导致"无有效商品"
+    if (userStore.userInfo.token) {
+      await cartStore.updateNewList()
+    }
     getCheckInfo()
 })
 // 控制弹框打开
 const showDialog = ref(false)
+// 配送时间：1不限 2工作日 3双休日
+const deliveryTimeType = ref(1)
+// 支付方式：1在线支付 2货到付款
+const payType = ref(1)
 // 切换地址
 const activeAddress = ref({})
 const switchAddress=(item)=>{
@@ -25,6 +48,37 @@ const confirm=()=>{
   curAddress.value=activeAddress.value
   showDialog.value=false
   activeAddress.value={}
+}
+
+// 创建订单
+const createOrder=async()=>{
+      // 兜底：没有选中商品时不发请求
+      if (selectedGoods.value.length === 0) {
+        ElMessage({ type: 'warning', message: '请先选择要结算的商品' })
+        return
+      }
+      const res = await createOrderAPI({
+      deliveryTimeType: deliveryTimeType.value,
+      payType: payType.value,
+      payChannel:1,
+      buyerMessage: ' ',
+      goods: selectedGoods.value.map(item=>{
+        return {
+          skuId:item.skuId,
+          count:item.count
+        }
+      }),
+      addressId:curAddress.value.id
+     })
+     const orderId=res.result.id
+     router.push({
+        path:'/pay',
+        query:{
+            id:orderId
+        }
+     })
+    //  更新购物车
+    cartStore.updateNewList()
 }
 </script>
 
@@ -64,7 +118,7 @@ const confirm=()=>{
               </tr>
             </thead>
             <tbody>
-              <tr v-for="i in checkInfo.goods" :key="i.id">
+              <tr v-for="i in selectedGoods" :key="i.id">
                 <td>
                   <a href="javascript:;" class="info">
                     <img :src="i.picture" alt="">
@@ -75,9 +129,9 @@ const confirm=()=>{
                   </a>
                 </td>
                 <td>&yen;{{ i.price }}</td>
-                <td>{{ i.price }}</td>
-                <td>&yen;{{ i.totalPrice }}</td>
-                <td>&yen;{{ i.totalPayPrice }}</td>
+                <td>{{ i.count }}</td>
+                <td>&yen;{{ (i.price * i.count).toFixed(2) }}</td>
+                <td>&yen;{{ (i.price * i.count).toFixed(2) }}</td>
               </tr>
             </tbody>
           </table>
@@ -85,15 +139,15 @@ const confirm=()=>{
         <!-- 配送时间 -->
         <h3 class="box-title">配送时间</h3>
         <div class="box-body">
-          <a class="my-btn active" href="javascript:;">不限送货时间：周一至周日</a>
-          <a class="my-btn" href="javascript:;">工作日送货：周一至周五</a>
-          <a class="my-btn" href="javascript:;">双休日、假日送货：周六至周日</a>
+          <a class="my-btn" :class="{active: deliveryTimeType === 1}" @click="deliveryTimeType = 1" href="javascript:;">不限送货时间：周一至周日</a>
+          <a class="my-btn" :class="{active: deliveryTimeType === 2}" @click="deliveryTimeType = 2" href="javascript:;">工作日送货：周一至周五</a>
+          <a class="my-btn" :class="{active: deliveryTimeType === 3}" @click="deliveryTimeType = 3" href="javascript:;">双休日、假日送货：周六至周日</a>
         </div>
         <!-- 支付方式 -->
         <h3 class="box-title">支付方式</h3>
         <div class="box-body">
-          <a class="my-btn active" href="javascript:;">在线支付</a>
-          <a class="my-btn" href="javascript:;">货到付款</a>
+          <a class="my-btn" :class="{active: payType === 1}" @click="payType = 1" href="javascript:;">在线支付</a>
+          <a class="my-btn" :class="{active: payType === 2}" @click="payType = 2" href="javascript:;">货到付款</a>
           <span style="color:#999">货到付款需付5元手续费</span>
         </div>
         <!-- 金额明细 -->
@@ -102,25 +156,25 @@ const confirm=()=>{
           <div class="total">
             <dl>
               <dt>商品件数：</dt>
-              <dd>{{ checkInfo.summary?.goodsCount }}件</dd>
+              <dd>{{ goodsCount }}件</dd>
             </dl>
             <dl>
               <dt>商品总价：</dt>
-              <dd>¥{{ checkInfo.summary?.totalPrice.toFixed(2) }}</dd>
+              <dd>¥{{ totalPrice.toFixed(2) }}</dd>
             </dl>
             <dl>
               <dt>运<i></i>费：</dt>
-              <dd>¥{{ checkInfo.summary?.postFee.toFixed(2) }}</dd>
+              <dd>¥{{ postFee.toFixed(2) }}</dd>
             </dl>
             <dl>
               <dt>应付总额：</dt>
-              <dd class="price">{{ checkInfo.summary?.totalPayPrice.toFixed(2) }}</dd>
+              <dd class="price">{{ totalPayPrice.toFixed(2) }}</dd>
             </dl>
           </div>
         </div>
         <!-- 提交订单 -->
         <div class="submit">
-          <el-button type="primary" size="large" >提交订单</el-button>
+          <el-button @click="createOrder" type="primary" size="large" >提交订单</el-button>
         </div>
       </div>
     </div>
@@ -138,7 +192,7 @@ const confirm=()=>{
   </div>
   <template #footer>
     <span class="dialog-footer">
-      <el-button>取消</el-button>
+      <el-button @click="showDialog = false">取消</el-button>
       <el-button type="primary" @click="confirm">确定</el-button>
     </span>
   </template>
