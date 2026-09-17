@@ -8,7 +8,7 @@ import router from '@/router'
 const httpInstance = axios.create({
     // 存在跨域问题，需要配置代理
     baseURL:'/api',
-    timeout:50000,
+    timeout:10000,
 })
 
 
