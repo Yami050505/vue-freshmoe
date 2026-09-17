@@ -1,6 +1,7 @@
 // createRouter 创建路由实例
 // createWebHistory 创建历史模式的路由
 import { createRouter, createWebHistory } from 'vue-router'
+// import { useUserStore } from '@/stores/userStore'
 import Layout from '@/views/Layout/index.vue'
 import Login from '@/views/Login/index.vue'
 import Home from '@/views/Home/index.vue'
@@ -99,5 +100,14 @@ const router = createRouter({
     }
   }
 })
+
+// // 全局前置守卫：会员中心相关路由需要登录
+// router.beforeEach((to) => {
+//   const userStore = useUserStore()
+//   // 如果目标路由属于 /member 且没有 token，跳转到登录页
+//   if (to.path.startsWith('/member') && !userStore.userInfo.token) {
+//     return '/login'
+//   }
+// })
 
 export default router
