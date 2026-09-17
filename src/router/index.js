@@ -75,7 +75,7 @@ const router = createRouter({
           children:[
             {
               // 用户
-              path:'user',
+              path:'',
               component:UserInfo
             },
             {
