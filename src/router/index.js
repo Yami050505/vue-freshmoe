@@ -69,6 +69,8 @@ const router = createRouter({
           // 会员中心路由
           path:'/member',
           component:Member,
+          // 访问 /member 时默认跳转到个人中心
+          redirect:'/member/user',
           children:[
             {
               // 用户
