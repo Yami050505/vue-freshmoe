@@ -14,6 +14,10 @@
         <div class="links">
           <RouterLink to="/member/order">我的订单</RouterLink>
         </div>
+        <h4>数据统计</h4>
+        <div class="links">
+          <RouterLink to="/member/statistics">订单统计</RouterLink>
+        </div>
       </div>
     </div>
     <div class="article">

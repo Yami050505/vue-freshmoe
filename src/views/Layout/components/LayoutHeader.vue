@@ -11,8 +11,8 @@ const categoryStore= useCategoryStore()
         <RouterLink to="/">鲜萌</RouterLink>
       </h1>
       <ul class="app-header-nav">
-        <li class="home active">
-          <RouterLink to="/">首页</RouterLink>
+        <li class="home">
+          <RouterLink exact-active-class="active" to="/">首页</RouterLink>
         </li>
         <li class="home" v-for="item in categoryStore.categoryList" :key="item.id">
           <RouterLink active-class="active" :to="`/category/${item.id}`">{{item.name}}</RouterLink>
@@ -74,18 +74,10 @@ const categoryStore= useCategoryStore()
         }
       }
   
-      // 分类链接的 active 类在 a 上（router active-class）
+      // 激活态（首页 exact-active-class、分类 active-class 均加在 a 上）
       .active {
         color: $xtxColor;
         border-bottom: 1px solid $xtxColor;
-      }
-
-      // “首页”的 active 类在 li 上，内部 a 需要单独设置
-      &.active {
-        a {
-          color: $xtxColor;
-          border-bottom: 1px solid $xtxColor;
-        }
       }
     }
   }

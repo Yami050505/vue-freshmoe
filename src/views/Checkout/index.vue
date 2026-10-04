@@ -1,6 +1,9 @@
 <script setup>
 import { getCheckInfoAPI,createOrderAPI } from '@/apis/checkout'
-import { ref,onMounted,computed } from 'vue'
+import { addAddressAPI, deleteAddressAPI } from '@/apis/address'
+// 省市区三级联动数据（后端 /region/tree 接口不可用，使用前端数据包，编码为国标6位行政区划码）
+import { regionData, codeToText } from 'element-china-area-data'
+import { ref,reactive,onMounted,computed } from 'vue'
 import {useRouter} from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {useCartStore} from '@/stores/cartStore'
@@ -48,6 +51,127 @@ const confirm=()=>{
   curAddress.value=activeAddress.value
   showDialog.value=false
   activeAddress.value={}
+}
+
+// 删除地址：自定义简洁确认弹窗（避免 ElMessageBox 与切换地址弹窗的层级/定位冲突）
+const delTarget = ref(null) // 待删除的地址对象
+const deleteConfirmVisible = ref(false)
+const deleting = ref(false)
+const deleteAddress=(item)=>{
+  delTarget.value=item
+  deleteConfirmVisible.value=true
+}
+// 确认删除
+const confirmDelete=async()=>{
+  if(!delTarget.value)return
+  deleting.value=true
+  try{
+    await deleteAddressAPI(delTarget.value.id)
+    ElMessage.success('地址已删除')
+    deleteConfirmVisible.value=false
+    // 刷新地址列表数据
+    const res = await getCheckInfoAPI()
+    checkInfo.value = res.result
+    // 若删除的正是页面当前使用的地址：改选默认地址，没有默认则取第一条，都没有则置空
+    if (curAddress.value.id === delTarget.value.id) {
+      curAddress.value =
+        checkInfo.value.userAddresses.find((a) => a.isDefault === 0) ||
+        checkInfo.value.userAddresses[0]
+    }
+    // 弹窗内待确认的选中项若被删，一并清空
+    if (activeAddress.value.id === delTarget.value.id) activeAddress.value = {}
+    delTarget.value=null
+  }catch{
+    // 删除失败（网络异常等，拦截器已有错误提示）：弹窗保留，可重试
+  }finally{
+    deleting.value=false
+  }
+}
+
+// ===== 添加地址 =====
+const addFlag = ref(false) // 新增地址弹层显隐
+const submitting = ref(false) // 保存按钮 loading
+const addressFormRef = ref()
+const addressForm = reactive({
+  receiver: '', // 收货人
+  contact: '', // 手机号
+  region: [], // 省市区三级联动选中的编码 [provinceCode, cityCode, countyCode]
+  address: '', // 详细地址
+  isDefault: 1 // 是否默认地址：0是 1否（与后端约定一致），默认不勾选
+})
+// 表单校验规则
+const addressRules = {
+  receiver: [
+    { required: true, message: '请输入收货人姓名', trigger: 'blur' },
+    { min: 2, max: 20, message: '姓名长度为 2-20 个字符', trigger: 'blur' }
+  ],
+  contact: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的 11 位手机号', trigger: 'blur' }
+  ],
+  region: [
+    {
+      required: true,
+      validator: (rule, value, callback) =>
+        value && value.length === 3
+          ? callback()
+          : callback(new Error('请选择省 / 市 / 区')),
+      trigger: 'change'
+    }
+  ],
+  address: [
+    { required: true, message: '请输入详细地址', trigger: 'blur' },
+    { min: 5, max: 50, message: '详细地址长度为 5-50 个字符', trigger: 'blur' }
+  ]
+}
+// 打开弹层时先重置表单，避免残留上次输入
+const openAddDialog = () => {
+  addressForm.receiver = ''
+  addressForm.contact = ''
+  addressForm.region = []
+  addressForm.address = ''
+  addressForm.isDefault = 1
+  addFlag.value = true
+}
+// 校验通过后提交新地址
+const submitAddress = async () => {
+  try {
+    await addressFormRef.value.validate()
+  } catch {
+    return // 校验未通过，保留弹层让用户修改
+  }
+  submitting.value = true
+  try {
+    // 数据包省/市用短码（如 44、4413），后端要求国标 6 位码，右侧补 0：44→440000、4413→441300；区县已是 6 位
+    const [pCode, cCode, dCode] = addressForm.region
+    const provinceCode = pCode.padEnd(6, '0')
+    const cityCode = cCode.padEnd(6, '0')
+    const countyCode = dCode.padEnd(6, '0')
+    const res = await addAddressAPI({
+      receiver: addressForm.receiver.trim(),
+      contact: addressForm.contact.trim(),
+      provinceCode,
+      cityCode,
+      countyCode,
+      // 省市区文字，例如 "广东省 惠州市 惠城区"（短码可直接在 codeToText 中查到文字）
+      fullLocation: [pCode, cCode, dCode]
+        .map((code) => codeToText[code])
+        .join(' '),
+      address: addressForm.address.trim(),
+      isDefault: addressForm.isDefault
+    })
+    ElMessage.success('地址添加成功')
+    addFlag.value = false
+    // 重新拉取结算信息，刷新地址列表与运费
+    await getCheckInfo()
+    // 自动选中刚创建的地址，直接用于下单
+    const created = checkInfo.value.userAddresses.find(
+      (item) => item.id === res.result.id
+    )
+    if (created) curAddress.value = created
+  } finally {
+    submitting.value = false
+  }
 }
 
 // 创建订单
@@ -100,7 +224,7 @@ const createOrder=async()=>{
             </div>
             <div class="action">
               <el-button size="large" @click="showDialog = true">切换地址</el-button>
-              <el-button size="large" @click="addFlag = true">添加地址</el-button>
+              <el-button size="large" type="primary" @click="openAddDialog">添加地址</el-button>
             </div>
           </div>
         </div>
@@ -188,7 +312,16 @@ const createOrder=async()=>{
       <li><span>联系方式：</span>{{ item.contact }}</li>
       <li><span>收货地址：</span>{{ item.fullLocation + item.address }}</li>
       </ul>
+      <!-- 删除按钮：stop 阻止冒泡，避免点删除时同时选中该地址 -->
+      <el-button
+        class="del-btn"
+        link
+        type="danger"
+        size="small"
+        @click.stop="deleteAddress(item)"
+      >删除</el-button>
     </div>
+    <el-empty v-if="!checkInfo.userAddresses?.length" description="暂无收货地址，请点击页面上的“添加地址”新建" :image-size="80" />
   </div>
   <template #footer>
     <span class="dialog-footer">
@@ -198,6 +331,82 @@ const createOrder=async()=>{
   </template>
 </el-dialog>
   <!-- 添加地址 -->
+  <el-dialog v-model="addFlag" title="新增收货地址" width="34%" center>
+    <el-form
+      ref="addressFormRef"
+      :model="addressForm"
+      :rules="addressRules"
+      label-width="92px"
+      class="address-form"
+    >
+      <el-form-item label="收货人" prop="receiver">
+        <el-input v-model="addressForm.receiver" placeholder="请输入收货人姓名" maxlength="20" />
+      </el-form-item>
+      <el-form-item label="手机号" prop="contact">
+        <el-input v-model="addressForm.contact" placeholder="请输入 11 位手机号" maxlength="11" />
+      </el-form-item>
+      <el-form-item label="所在地区" prop="region">
+        <el-cascader
+          v-model="addressForm.region"
+          :options="regionData"
+          placeholder="请选择省 / 市 / 区"
+          style="width: 100%"
+        />
+      </el-form-item>
+      <el-form-item label="详细地址" prop="address">
+        <el-input
+          v-model="addressForm.address"
+          type="textarea"
+          :rows="2"
+          placeholder="街道、楼牌号等详细信息"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
+      <el-form-item label="设为默认">
+        <el-switch v-model="addressForm.isDefault" :active-value="0" :inactive-value="1" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="addFlag = false">取消</el-button>
+      <el-button type="primary" :loading="submitting" @click="submitAddress">
+        保存并使用
+      </el-button>
+    </template>
+  </el-dialog>
+
+  <!-- 删除地址确认弹窗：简洁居中样式，独立 dialog 避免与切换弹窗层级冲突 -->
+  <el-dialog
+    v-model="deleteConfirmVisible"
+    width="380px"
+    align-center
+    :show-close="false"
+    class="del-confirm"
+  >
+    <div class="del-confirm__body">
+      <span class="del-confirm__icon">?</span>
+      <p class="del-confirm__title">确认删除该收货地址吗？</p>
+      <p v-if="delTarget" class="del-confirm__desc">
+        {{ delTarget.receiver }} {{ delTarget.contact }}
+      </p>
+    </div>
+    <template #footer>
+      <div class="del-confirm__footer">
+        <el-button size="large" class="del-confirm__btn" @click="deleteConfirmVisible = false">
+          取消
+        </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          class="del-confirm__btn del-confirm__btn--danger"
+          :loading="deleting"
+          @click="confirmDelete"
+        >
+          确认删除
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -395,6 +604,7 @@ const createOrder=async()=>{
   align-items: center;
 
   &.item {
+    position: relative;
     border: 1px solid #f5f5f5;
     margin-bottom: 10px;
     cursor: pointer;
@@ -405,10 +615,111 @@ const createOrder=async()=>{
       background: lighten($xtxColor, 50%);
     }
 
+    // 右上角删除按钮：常态半透明，悬停卡片时全显
+    .del-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      opacity: 0.55;
+    }
+
+    &:hover .del-btn {
+      opacity: 1;
+    }
+
     >ul {
       padding: 10px;
       font-size: 14px;
       line-height: 30px;
+    }
+  }
+}
+</style>
+
+<!-- 删除确认弹窗样式：弹窗 teleport 到 body，需用非 scoped 样式命中 -->
+<style lang="scss">
+.del-confirm.el-dialog {
+  border-radius: 12px;
+  padding: 8px 10px;
+  overflow: hidden;
+
+  // 无标题，隐藏自带 header 占位
+  .el-dialog__header {
+    display: none;
+  }
+
+  .el-dialog__body {
+    padding: 30px 24px 10px;
+  }
+
+  .el-dialog__footer {
+    padding: 10px 24px 26px;
+  }
+
+  .del-confirm__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  // 橙色圆形问号图标
+  .del-confirm__icon {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 18px;
+    border-radius: 50%;
+    background: $xtxColor;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 52px;
+
+    // 问号视觉居中微调
+    padding-left: 2px;
+    box-sizing: border-box;
+  }
+
+  .del-confirm__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: $darkColor;
+  }
+
+  .del-confirm__desc {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #999;
+  }
+
+  .del-confirm__footer {
+    display: flex;
+    gap: 14px;
+  }
+
+  .del-confirm__btn {
+    flex: 1;
+    height: 44px;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  // 取消：白底灰边
+  .del-confirm__btn {
+    border-color: #ddd;
+    color: #666;
+  }
+
+  // 确认：主题橙实心
+  .del-confirm__btn--danger {
+    border-color: $xtxColor;
+    background: $xtxColor;
+
+    &:hover,
+    &:focus {
+      border-color: lighten($xtxColor, 8%);
+      background: lighten($xtxColor, 8%);
     }
   }
 }

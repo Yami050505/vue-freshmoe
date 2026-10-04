@@ -101,7 +101,7 @@ const pageChange = (page) => {
                 </ul>
               </div>
               <div class="column state">
-                <p>{{ fomartPayState(order.orderState) }}</p>
+                <p>{{ fomartPayState(order.orderState) }}</p>-+
                 <p v-if="order.orderState === 3">
                   <a href="javascript:;" class="green">查看物流</a>
                 </p>

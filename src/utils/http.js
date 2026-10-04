@@ -8,7 +8,8 @@ import router from '@/router'
 const httpInstance = axios.create({
     // 存在跨域问题，需要配置代理
     baseURL:'/api',
-    timeout:10000,
+    // 后端偶发响应较慢（大分页可能需要十几秒），超时放宽到30秒
+    timeout:30000,
 })
 
 
@@ -29,11 +30,11 @@ httpInstance.interceptors.request.use(config => {
 // axios响应式拦截器
 httpInstance.interceptors.response.use(res => res.data, e => {
    const userStore = useUserStore()
-  // 错误提示统一错误提示
-  ElMessage({type:'warning',message:e.response.data.message})
+  // 统一错误提示：超时/断网时没有 e.response，需要做空值保护
+  ElMessage({type:'warning',message:e.response?.data?.message || '网络异常，请稍后重试'})
    //401token失效处理
     // 清空用户数据
-    if(e.response.status===401){
+    if(e.response?.status===401){
       userStore.clearUserInfo()
        // 跳转登录页
     router.push('/login')

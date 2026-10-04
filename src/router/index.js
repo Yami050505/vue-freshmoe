@@ -15,6 +15,7 @@ import PayBack from '@/views/Pay/PayBack.vue'
 import Member from '@/views/Member/index.vue'
 import UserOrder from '@/views/Member/components/UserOrder.vue'
 import UserInfo from '@/views/Member/components/UserInfo.vue'
+import UserStatistics from '@/views/Member/components/UserStatistics.vue'
 
 
 
@@ -74,14 +75,24 @@ const router = createRouter({
           redirect:'/member/user',
           children:[
             {
-              // 用户
+              // 用户（默认子路由，访问 /member 重定向到 /member/user）
               path:'',
+              component:UserInfo
+            },
+            {
+              // 个人中心
+              path:'user',
               component:UserInfo
             },
             {
               // 订单路由
               path:'order',
               component:UserOrder
+            },
+            {
+              // 订单统计（数据统计）
+              path:'statistics',
+              component:UserStatistics
             }
           ]
         }
