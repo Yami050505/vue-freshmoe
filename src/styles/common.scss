@@ -9,7 +9,7 @@ html {
 }
 body {
   height: 100%;
-  color: #333;
+  color: #222;
   min-width: 1240px;
   font: 1em/1.4 'Microsoft Yahei', 'PingFang SC', 'Avenir', 'Segoe UI',
     'Hiragino Sans GB', 'STHeiti', 'Microsoft Sans Serif', 'WenQuanYi Micro Hei',
@@ -28,7 +28,7 @@ dd {
 }
 a {
   text-decoration: none;
-  color: #333;
+  color: #222;
   outline: none;
 }
 i {
@@ -101,4 +101,26 @@ ul {
 // reset element
 .el-breadcrumb__inner.is-link {
   font-weight: 400 !important;
+}
+
+// ===== 橙+藏青主题适配 =====
+// 主色按钮：橙底白字（Element 默认样式即满足对比度），仅微调圆角观感保持默认
+// 文字类激活态统一用藏青，白底上更稳重；下划线/装饰用活力橙
+.el-link--primary,
+.el-tabs__item.is-active,
+.el-checkbox__input.is-checked + .el-checkbox__label,
+.el-radio__input.is-checked + .el-radio__label {
+  color: $darkColor;
+}
+
+// tab 激活下划线：活力橙
+.el-tabs__active-bar {
+  background-color: $xtxColor;
+}
+
+// 主色按钮 hover 时加深为藏青描边风格的细节统一（保持白底朴素按钮的可读性）
+.el-button--primary.is-plain {
+  --el-button-hover-text-color: #fff;
+  --el-button-hover-bg-color: $xtxColor;
+  --el-button-hover-border-color: $xtxColor;
 }

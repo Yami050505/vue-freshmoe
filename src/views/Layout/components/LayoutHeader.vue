@@ -8,7 +8,7 @@ const categoryStore= useCategoryStore()
   <header class='app-header'>
     <div class="container">
       <h1 class="logo">
-        <RouterLink to="/">小兔鲜</RouterLink>
+        <RouterLink to="/">鲜萌</RouterLink>
       </h1>
       <ul class="app-header-nav">
         <li class="home active">
@@ -46,7 +46,7 @@ const categoryStore= useCategoryStore()
       height: 132px;
       width: 100%;
       text-indent: -9999px;
-      background: url('@/assets/images/logo.png') no-repeat center 18px / contain;
+      background: url('@/assets/images/logo-horizontal.png') no-repeat center / contain;
     }
   }
 
@@ -74,9 +74,18 @@ const categoryStore= useCategoryStore()
         }
       }
   
+      // 分类链接的 active 类在 a 上（router active-class）
       .active {
         color: $xtxColor;
         border-bottom: 1px solid $xtxColor;
+      }
+
+      // “首页”的 active 类在 li 上，内部 a 需要单独设置
+      &.active {
+        a {
+          color: $xtxColor;
+          border-bottom: 1px solid $xtxColor;
+        }
       }
     }
   }

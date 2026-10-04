@@ -60,8 +60,8 @@ const categoryStore= useCategoryStore()
   .logo {
     width: 200px;
     height: 80px;
-    background: url("@/assets/images/logo.png") no-repeat right 2px;
-    background-size: 160px auto;
+    // 横向 Logo（566x300），contain 保证在 80px 吸顶栏内完整显示
+    background: url("@/assets/images/logo-horizontal.png") no-repeat center / contain;
   }
 
   .right {

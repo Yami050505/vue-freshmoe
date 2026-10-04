@@ -76,7 +76,7 @@ const doLogin =  () => {
     <header class="login-header">
       <div class="container m-top-20">
         <h1 class="logo">
-          <RouterLink to="/">小兔鲜</RouterLink>
+          <RouterLink to="/">鲜萌</RouterLink>
         </h1>
         <RouterLink class="entry" to="/">
           进入网站首页
@@ -123,7 +123,7 @@ const doLogin =  () => {
           <a href="javascript:;">搜索推荐</a>
           <a href="javascript:;">友情链接</a>
         </p>
-        <p>CopyRight &copy; 小兔鲜儿</p>
+        <p>CopyRight &copy; 鲜萌 FreshMoe</p>
       </div>
     </footer>
   </div>
@@ -148,7 +148,7 @@ const doLogin =  () => {
       height: 132px;
       width: 100%;
       text-indent: -9999px;
-      background: url("@/assets/images/logo.png") no-repeat center 18px / contain;
+      background: url("@/assets/images/logo-horizontal.png") no-repeat center / contain;
     }
   }
 
@@ -175,7 +175,8 @@ const doLogin =  () => {
 }
 
 .login-section {
-  background: url('@/assets/images/login-bg.png') no-repeat center / cover;
+  // 背景图按高度铺满、左对齐：柑橘主体在左侧，右侧留白承载登录框
+  background: url('@/assets/images/login-bg.png') no-repeat left center / cover;
   height: 488px;
   position: relative;
 

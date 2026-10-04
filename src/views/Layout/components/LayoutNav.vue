@@ -45,7 +45,7 @@ const confirm=()=>{
 
 <style scoped lang="scss">
 .app-topnav {
-  background: #333;
+  background: $darkColor;
   ul {
     display: flex;
     height: 53px;
